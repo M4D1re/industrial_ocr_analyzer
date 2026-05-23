@@ -1,12 +1,14 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QLabel,
+    QFileDialog,
     QDockWidget,
     QMainWindow,
+    QMessageBox,
     QStatusBar,
     QToolBar,
 )
 
+from app.services.session_loader_service import SessionLoaderService
 from app.ui.widgets.chart_panel import ChartPanel
 from app.ui.widgets.readings_table import ReadingsTable
 from app.ui.widgets.session_info_panel import SessionInfoPanel
@@ -20,6 +22,12 @@ class MainWindow(QMainWindow):
 
     def __init__(self) -> None:
         super().__init__()
+
+        self.session_loader = SessionLoaderService()
+
+        self.current_metadata: dict | None = None
+
+        self.current_readings: list[dict] = []
 
         self.setWindowTitle("Industrial OCR Analyzer")
 
@@ -50,6 +58,10 @@ class MainWindow(QMainWindow):
         toolbar.setMovable(False)
 
         open_action = toolbar.addAction("Open Session")
+
+        open_action.triggered.connect(
+            self._open_session_archive
+        )
 
         export_action = toolbar.addAction("Export Excel")
 
@@ -124,3 +136,46 @@ class MainWindow(QMainWindow):
         dock.setWidget(self.readings_table)
 
         self.addDockWidget(Qt.BottomDockWidgetArea, dock)
+
+    def _open_session_archive(self) -> None:
+        """
+        Opens .session.zip archive.
+        """
+
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Open session archive",
+            "",
+            "Session Archive (*.session.zip *.zip)",
+        )
+
+        if not file_path:
+            return
+
+        try:
+            metadata, readings = self.session_loader.load_archive(
+                file_path
+            )
+        except Exception as error:
+            QMessageBox.critical(
+                self,
+                "Load session failed",
+                str(error),
+            )
+            return
+
+        self.current_metadata = metadata
+
+        self.current_readings = readings
+
+        self.session_info_panel.set_metadata(metadata)
+
+        self.readings_table.set_readings(readings)
+
+        self.statistics_panel.set_statistics(readings)
+
+        self.chart_panel.set_readings(readings)
+
+        self.statusBar().showMessage(
+            f"Loaded session: {len(readings)} readings"
+        )
