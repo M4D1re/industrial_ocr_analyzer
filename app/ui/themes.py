@@ -17,6 +17,8 @@ QToolBar {
     padding: 6px;
 }
 
+/* TOOLBAR BUTTONS */
+
 QToolButton {
     background-color: #344054;
     color: #f8fafc;
@@ -34,7 +36,86 @@ QToolButton:hover {
 QToolButton:pressed {
     background-color: #2563eb;
     border: 1px solid #93c5fd;
+    padding-left: 10px;
+    padding-top: 9px;
 }
+
+/* NORMAL BUTTONS */
+
+QPushButton {
+    background-color: #344054;
+    color: #f8fafc;
+    border: 1px solid #475569;
+    border-radius: 8px;
+    padding: 7px 12px;
+    margin: 2px;
+}
+
+QPushButton:hover {
+    background-color: #3f4f68;
+    border: 1px solid #60a5fa;
+}
+
+QPushButton:pressed {
+    background-color: #2563eb;
+    border: 1px solid #93c5fd;
+    padding-left: 10px;
+    padding-top: 9px;
+}
+
+/* DOCKS */
+
+QDockWidget {
+    color: #e5e7eb;
+    font-weight: 600;
+}
+
+QDockWidget::title {
+    background-color: #2f3742;
+    padding: 7px;
+    border-bottom: 1px solid #3d4652;
+}
+
+/* LISTS */
+
+QListWidget {
+    background-color: #111827;
+    color: #e5e7eb;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    padding: 4px;
+}
+
+QListWidget::item {
+    padding: 6px;
+    border-radius: 5px;
+}
+
+QListWidget::item:hover {
+    background-color: #263244;
+}
+
+QListWidget::item:selected {
+    background-color: #2563eb;
+    color: #ffffff;
+}
+
+/* DATE INPUTS */
+
+QDateTimeEdit {
+    background-color: #111827;
+    color: #e5e7eb;
+    border: 1px solid #4b5563;
+    border-radius: 7px;
+    padding: 6px;
+    min-height: 28px;
+}
+
+QDateTimeEdit:focus {
+    border: 1px solid #60a5fa;
+}
+
+/* TABLES */
 
 QTableWidget {
     background-color: #111827;
@@ -44,19 +125,15 @@ QTableWidget {
     border-radius: 8px;
 }
 
+QTableWidget::item {
+    padding: 5px;
+}
+
 QHeaderView::section {
     background-color: #2f3742;
     color: #e5e7eb;
     padding: 6px;
     border: 1px solid #3d4652;
-}
-
-QListWidget {
-    background-color: #111827;
-    color: #e5e7eb;
-    border: 1px solid #374151;
-    border-radius: 8px;
-    padding: 4px;
 }
 
 QStatusBar {
