@@ -4,6 +4,8 @@ import sqlite3
 import zipfile
 from pathlib import Path
 
+from app.analytics.value_parser import AnalyzerValueParser
+
 from app.utils.paths import DATA_DIR
 
 
@@ -88,4 +90,17 @@ class SessionLoaderService:
 
         connection.close()
 
-        return [dict(row) for row in rows]
+        readings = []
+
+        for row in rows:
+            reading = dict(row)
+
+            parsed_from_raw = AnalyzerValueParser.parse(
+                str(reading.get("raw_text") or "")
+            )
+
+            reading["normalized_value"] = parsed_from_raw
+
+            readings.append(reading)
+
+        return readings

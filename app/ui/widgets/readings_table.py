@@ -16,7 +16,7 @@ class ReadingsTable(QWidget):
 
         self.table = QTableWidget()
 
-        self.table.setColumnCount(7)
+        self.table.setColumnCount(9)
 
         self.table.setHorizontalHeaderLabels(
             [
@@ -24,7 +24,9 @@ class ReadingsTable(QWidget):
                 "Session ID",
                 "ROI ID",
                 "ROI Name",
-                "Value",
+                "DB Value",
+                "Normalized Value",
+                "Raw Text",
                 "Confidence",
                 "Created At",
             ]
@@ -48,12 +50,23 @@ class ReadingsTable(QWidget):
 
             self.table.insertRow(row)
 
-            self.table.setItem(row, 0, QTableWidgetItem(str(reading.get("id"))))
-            self.table.setItem(row, 1, QTableWidgetItem(str(reading.get("session_id"))))
-            self.table.setItem(row, 2, QTableWidgetItem(str(reading.get("roi_id"))))
-            self.table.setItem(row, 3, QTableWidgetItem(str(reading.get("roi_name"))))
-            self.table.setItem(row, 4, QTableWidgetItem(str(reading.get("value"))))
-            self.table.setItem(row, 5, QTableWidgetItem(str(reading.get("confidence"))))
-            self.table.setItem(row, 6, QTableWidgetItem(str(reading.get("created_at"))))
+            values = [
+                reading.get("id"),
+                reading.get("session_id"),
+                reading.get("roi_id"),
+                reading.get("roi_name"),
+                reading.get("value"),
+                reading.get("normalized_value"),
+                reading.get("raw_text"),
+                reading.get("confidence"),
+                reading.get("created_at"),
+            ]
+
+            for column, value in enumerate(values):
+                self.table.setItem(
+                    row,
+                    column,
+                    QTableWidgetItem(str(value)),
+                )
 
         self.table.resizeColumnsToContents()

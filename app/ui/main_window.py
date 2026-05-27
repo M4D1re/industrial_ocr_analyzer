@@ -14,6 +14,7 @@ from app.ui.widgets.readings_table import ReadingsTable
 from app.ui.widgets.session_info_panel import SessionInfoPanel
 from app.ui.widgets.statistics_panel import StatisticsPanel
 
+from app.ui.widgets.roi_filter_panel import ROISelectionPanel
 
 class MainWindow(QMainWindow):
     """
@@ -96,6 +97,8 @@ class MainWindow(QMainWindow):
 
         self._create_statistics_dock()
 
+        self._create_roi_selection_dock()
+
         self._create_readings_dock()
 
     def _create_session_info_dock(self) -> None:
@@ -176,6 +179,58 @@ class MainWindow(QMainWindow):
 
         self.chart_panel.set_readings(readings)
 
+        self.roi_selection_panel.set_readings(readings)
+
         self.statusBar().showMessage(
             f"Loaded session: {len(readings)} readings"
+        )
+
+    def _create_roi_selection_dock(self) -> None:
+        """
+        Creates ROI selection dock.
+        """
+
+        dock = QDockWidget("ROI Filter", self)
+
+        self.roi_selection_panel = ROISelectionPanel()
+
+        self.roi_selection_panel.roi_selected.connect(
+            self._on_roi_selected
+        )
+
+        dock.setWidget(self.roi_selection_panel)
+
+        self.addDockWidget(
+            Qt.LeftDockWidgetArea,
+            dock,
+        )
+
+    def _on_roi_selected(
+            self,
+            roi_id: int,
+    ) -> None:
+        """
+        Handles ROI selection.
+        """
+
+        self.chart_panel.set_readings(
+            self.current_readings,
+            roi_id,
+        )
+
+        self.statistics_panel.set_statistics(
+            self.current_readings,
+            roi_id,
+        )
+
+        filtered = [
+            reading
+            for reading in self.current_readings
+            if reading.get("roi_id") == roi_id
+        ]
+
+        self.readings_table.set_readings(filtered)
+
+        self.statusBar().showMessage(
+            f"ROI filter applied: {roi_id}"
         )

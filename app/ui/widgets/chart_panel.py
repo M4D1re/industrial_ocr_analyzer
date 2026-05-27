@@ -30,18 +30,38 @@ class ChartPanel(QWidget):
 
         self.setLayout(layout)
 
-    def set_readings(self, readings: list[dict]) -> None:
+    def set_readings(
+            self,
+            readings: list[dict],
+            roi_id: int | None = None,
+    ) -> None:
         """
         Displays readings chart.
         """
 
         self.plot_widget.clear()
 
-        values = [
-            float(reading["value"])
-            for reading in readings
-            if reading.get("value") is not None
-        ]
+        filtered = readings
+
+        if roi_id is not None:
+            filtered = [
+                reading
+                for reading in readings
+                if reading.get("roi_id") == roi_id
+            ]
+
+        values = []
+
+        for reading in filtered:
+            value = reading.get("normalized_value")
+
+            if value is None:
+                continue
+
+            try:
+                values.append(float(value))
+            except Exception:
+                continue
 
         if not values:
             return
