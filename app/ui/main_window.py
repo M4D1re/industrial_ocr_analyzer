@@ -12,6 +12,8 @@ from app.services.excel_export_service import ExcelExportService
 
 from app.ui.widgets.roi_filter_panel import ROISelectionPanel
 
+from app.ui.widgets.date_filter_panel import DateFilterPanel
+
 from app.services.session_loader_service import SessionLoaderService
 from app.ui.widgets.chart_panel import ChartPanel
 from app.ui.widgets.readings_table import ReadingsTable
@@ -35,6 +37,10 @@ class MainWindow(QMainWindow):
         self.current_metadata: dict | None = None
 
         self.current_readings: list[dict] = []
+
+        self.active_roi_id: int | None = None
+        self.active_start_datetime = None
+        self.active_end_datetime = None
 
         self.setWindowTitle("Industrial OCR Analyzer")
 
@@ -105,9 +111,9 @@ class MainWindow(QMainWindow):
 
         self._create_session_info_dock()
         self._create_roi_selection_dock()
+        self._create_date_filter_dock()
         self._create_statistics_dock()
         self._create_readings_dock()
-
 
     def _create_session_info_dock(self) -> None:
         """
@@ -189,6 +195,13 @@ class MainWindow(QMainWindow):
 
         self.roi_selection_panel.set_readings(readings)
 
+        self.date_filter_panel.set_range_from_readings(readings)
+        self.active_roi_id = None
+        self.active_start_datetime = None
+        self.active_end_datetime = None
+
+        self._refresh_views()
+
         self.statusBar().showMessage(
             f"Loaded session: {len(readings)} readings"
         )
@@ -218,26 +231,12 @@ class MainWindow(QMainWindow):
             roi_id: int,
     ) -> None:
         """
-        Handles ROI selection.
+        Applies ROI filter.
         """
 
-        self.chart_panel.set_readings(
-            self.current_readings,
-            roi_id,
-        )
+        self.active_roi_id = roi_id
 
-        self.statistics_panel.set_statistics(
-            self.current_readings,
-            roi_id,
-        )
-
-        filtered = [
-            reading
-            for reading in self.current_readings
-            if reading.get("roi_id") == roi_id
-        ]
-
-        self.readings_table.set_readings(filtered)
+        self._refresh_views()
 
         self.statusBar().showMessage(
             f"ROI filter applied: {roi_id}"
@@ -299,19 +298,11 @@ class MainWindow(QMainWindow):
         Resets ROI filter.
         """
 
+        self.active_roi_id = None
+
         self.roi_selection_panel.clear_selection()
 
-        self.readings_table.set_readings(
-            self.current_readings
-        )
-
-        self.statistics_panel.set_statistics(
-            self.current_readings
-        )
-
-        self.chart_panel.set_readings(
-            self.current_readings
-        )
+        self._refresh_views()
 
         self.statusBar().showMessage(
             "ROI filter reset"
@@ -364,4 +355,108 @@ class MainWindow(QMainWindow):
 
         self.statusBar().showMessage(
             f"Excel exported: {file_path}"
+        )
+
+    def _create_date_filter_dock(self) -> None:
+        """
+        Creates date filter dock.
+        """
+
+        dock = QDockWidget("Date Filter", self)
+
+        self.date_filter_panel = DateFilterPanel()
+
+        self.date_filter_panel.filter_applied.connect(
+            self._apply_date_filter
+        )
+
+        self.date_filter_panel.filter_reset_requested.connect(
+            self._reset_date_filter
+        )
+
+        dock.setWidget(self.date_filter_panel)
+
+        self.addDockWidget(Qt.LeftDockWidgetArea, dock)
+
+    def _get_filtered_readings(self) -> list[dict]:
+        """
+        Applies active ROI and datetime filters.
+        """
+
+        filtered = self.current_readings
+
+        if self.active_roi_id is not None:
+            filtered = [
+                reading
+                for reading in filtered
+                if reading.get("roi_id") == self.active_roi_id
+            ]
+
+        if (
+                self.active_start_datetime is not None
+                and self.active_end_datetime is not None
+        ):
+            start = self.active_start_datetime.toString(
+                "yyyy-MM-dd HH:mm:ss"
+            )
+
+            end = self.active_end_datetime.toString(
+                "yyyy-MM-dd HH:mm:ss"
+            )
+
+            filtered = [
+                reading
+                for reading in filtered
+                if start <= str(reading.get("created_at")) <= end
+            ]
+
+        return filtered
+
+    def _refresh_views(self) -> None:
+        """
+        Refreshes table, chart and statistics using active filters.
+        """
+
+        filtered = self._get_filtered_readings()
+
+        self.readings_table.set_readings(filtered)
+
+        self.statistics_panel.set_statistics(filtered)
+
+        self.chart_panel.set_readings(filtered)
+
+        self.statusBar().showMessage(
+            f"Displayed readings: {len(filtered)}"
+        )
+
+    def _apply_date_filter(
+            self,
+            start_datetime,
+            end_datetime,
+    ) -> None:
+        """
+        Applies datetime filter.
+        """
+
+        self.active_start_datetime = start_datetime
+        self.active_end_datetime = end_datetime
+
+        self._refresh_views()
+
+        self.statusBar().showMessage(
+            "Date filter applied"
+        )
+
+    def _reset_date_filter(self) -> None:
+        """
+        Resets datetime filter.
+        """
+
+        self.active_start_datetime = None
+        self.active_end_datetime = None
+
+        self._refresh_views()
+
+        self.statusBar().showMessage(
+            "Date filter reset"
         )
