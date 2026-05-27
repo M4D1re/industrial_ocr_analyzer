@@ -8,6 +8,8 @@ from PySide6.QtWidgets import (
     QToolBar,
 )
 
+from app.services.excel_export_service import ExcelExportService
+
 from app.ui.widgets.roi_filter_panel import ROISelectionPanel
 
 from app.services.session_loader_service import SessionLoaderService
@@ -27,6 +29,8 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.session_loader = SessionLoaderService()
+
+        self.excel_export_service = ExcelExportService()
 
         self.current_metadata: dict | None = None
 
@@ -67,6 +71,10 @@ class MainWindow(QMainWindow):
         )
 
         export_action = toolbar.addAction("Export Excel")
+
+        export_action.triggered.connect(
+            self._export_excel
+        )
 
         self.addToolBar(toolbar)
 
@@ -307,4 +315,53 @@ class MainWindow(QMainWindow):
 
         self.statusBar().showMessage(
             "ROI filter reset"
+        )
+
+    def _export_excel(self) -> None:
+        """
+        Exports current readings to Excel.
+        """
+
+        if not self.current_readings:
+            QMessageBox.warning(
+                self,
+                "No data",
+                "Нет загруженных данных для экспорта.",
+            )
+            return
+
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export Excel",
+            "session_analytics.xlsx",
+            "Excel Workbook (*.xlsx)",
+        )
+
+        if not file_path:
+            return
+
+        if not file_path.endswith(".xlsx"):
+            file_path = f"{file_path}.xlsx"
+
+        try:
+            self.excel_export_service.export(
+                readings=self.current_readings,
+                output_path=file_path,
+            )
+        except Exception as error:
+            QMessageBox.critical(
+                self,
+                "Export failed",
+                str(error),
+            )
+            return
+
+        QMessageBox.information(
+            self,
+            "Export completed",
+            f"Excel-файл сохранён:\n{file_path}",
+        )
+
+        self.statusBar().showMessage(
+            f"Excel exported: {file_path}"
         )
