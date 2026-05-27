@@ -30,7 +30,7 @@ class StatisticsPanel(QWidget):
             roi_id: int | None = None,
     ) -> None:
         """
-        Calculates statistics.
+        Calculates statistics by normalized values.
         """
 
         filtered = readings
@@ -42,7 +42,7 @@ class StatisticsPanel(QWidget):
                 if reading.get("roi_id") == roi_id
             ]
 
-        values = []
+        values: list[float] = []
 
         for reading in filtered:
             value = reading.get("normalized_value")
@@ -52,7 +52,7 @@ class StatisticsPanel(QWidget):
 
             try:
                 values.append(float(value))
-            except Exception:
+            except (TypeError, ValueError):
                 continue
 
         if not values:
@@ -62,18 +62,7 @@ class StatisticsPanel(QWidget):
             self.count_label.setText("Count: 0")
             return
 
-        self.min_label.setText(
-            f"Min: {min(values):.2f}"
-        )
-
-        self.max_label.setText(
-            f"Max: {max(values):.2f}"
-        )
-
-        self.avg_label.setText(
-            f"Avg: {sum(values) / len(values):.2f}"
-        )
-
-        self.count_label.setText(
-            f"Count: {len(values)}"
-        )
+        self.min_label.setText(f"Min: {min(values):.2f}")
+        self.max_label.setText(f"Max: {max(values):.2f}")
+        self.avg_label.setText(f"Avg: {sum(values) / len(values):.2f}")
+        self.count_label.setText(f"Count: {len(values)}")

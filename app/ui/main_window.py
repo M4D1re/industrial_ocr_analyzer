@@ -8,6 +8,8 @@ from PySide6.QtWidgets import (
     QToolBar,
 )
 
+from app.ui.widgets.roi_filter_panel import ROISelectionPanel
+
 from app.services.session_loader_service import SessionLoaderService
 from app.ui.widgets.chart_panel import ChartPanel
 from app.ui.widgets.readings_table import ReadingsTable
@@ -94,12 +96,10 @@ class MainWindow(QMainWindow):
         """
 
         self._create_session_info_dock()
-
-        self._create_statistics_dock()
-
         self._create_roi_selection_dock()
-
+        self._create_statistics_dock()
         self._create_readings_dock()
+
 
     def _create_session_info_dock(self) -> None:
         """
@@ -233,4 +233,78 @@ class MainWindow(QMainWindow):
 
         self.statusBar().showMessage(
             f"ROI filter applied: {roi_id}"
+        )
+
+    def _create_roi_selection_dock(self) -> None:
+        """
+        Creates ROI selection dock.
+        """
+
+        dock = QDockWidget("ROI Filter", self)
+
+        self.roi_selection_panel = ROISelectionPanel()
+
+        self.roi_selection_panel.roi_selected.connect(
+            self._on_roi_selected
+        )
+
+        self.roi_selection_panel.filter_reset_requested.connect(
+            self._reset_roi_filter
+        )
+
+        dock.setWidget(self.roi_selection_panel)
+
+        self.addDockWidget(Qt.LeftDockWidgetArea, dock)
+
+    def _on_roi_selected(
+            self,
+            roi_id: int,
+    ) -> None:
+        """
+        Applies ROI filter.
+        """
+
+        filtered = [
+            reading
+            for reading in self.current_readings
+            if reading.get("roi_id") == roi_id
+        ]
+
+        self.readings_table.set_readings(filtered)
+
+        self.statistics_panel.set_statistics(
+            self.current_readings,
+            roi_id,
+        )
+
+        self.chart_panel.set_readings(
+            self.current_readings,
+            roi_id,
+        )
+
+        self.statusBar().showMessage(
+            f"ROI filter applied: {roi_id}"
+        )
+
+    def _reset_roi_filter(self) -> None:
+        """
+        Resets ROI filter.
+        """
+
+        self.roi_selection_panel.clear_selection()
+
+        self.readings_table.set_readings(
+            self.current_readings
+        )
+
+        self.statistics_panel.set_statistics(
+            self.current_readings
+        )
+
+        self.chart_panel.set_readings(
+            self.current_readings
+        )
+
+        self.statusBar().showMessage(
+            "ROI filter reset"
         )

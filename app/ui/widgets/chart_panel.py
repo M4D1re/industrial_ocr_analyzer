@@ -50,7 +50,7 @@ class ChartPanel(QWidget):
                 if reading.get("roi_id") == roi_id
             ]
 
-        values = []
+        values: list[float] = []
 
         for reading in filtered:
             value = reading.get("normalized_value")
@@ -60,7 +60,7 @@ class ChartPanel(QWidget):
 
             try:
                 values.append(float(value))
-            except Exception:
+            except (TypeError, ValueError):
                 continue
 
         if not values:
