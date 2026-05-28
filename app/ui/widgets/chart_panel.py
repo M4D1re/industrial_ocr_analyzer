@@ -21,57 +21,53 @@ class ChartPanel(QWidget):
 
         self.plot_widget.setBackground("#20242b")
         self.plot_widget.showGrid(x=True, y=True)
-        self.plot_widget.setLabel("left", "Value")
-        self.plot_widget.setLabel("bottom", "Reading index")
+        self.plot_widget.setLabel("left", "Normalized Value")
+        self.plot_widget.setLabel("bottom", "Reading Index")
+        self.plot_widget.addLegend()
 
         layout = QVBoxLayout()
-
         layout.addWidget(self.plot_widget)
 
         self.setLayout(layout)
 
     def set_readings(
-            self,
-            readings: list[dict],
-            roi_id: int | None = None,
+        self,
+        readings: list[dict],
     ) -> None:
         """
-        Displays readings chart.
+        Displays readings grouped by ROI.
         """
 
         self.plot_widget.clear()
+        self.plot_widget.addLegend()
 
-        filtered = readings
+        grouped: dict[int, list[float]] = {}
 
-        if roi_id is not None:
-            filtered = [
-                reading
-                for reading in readings
-                if reading.get("roi_id") == roi_id
-            ]
-
-        values: list[float] = []
-
-        for reading in filtered:
+        for reading in readings:
+            roi_id = reading.get("roi_id")
             value = reading.get("normalized_value")
 
-            if value is None:
+            if roi_id is None or value is None:
                 continue
 
             try:
-                values.append(float(value))
+                numeric_value = float(value)
             except (TypeError, ValueError):
                 continue
 
-        if not values:
+            grouped.setdefault(int(roi_id), []).append(numeric_value)
+
+        if not grouped:
             return
 
-        x_values = list(range(len(values)))
+        for roi_id, values in sorted(grouped.items()):
+            x_values = list(range(len(values)))
 
-        self.plot_widget.plot(
-            x_values,
-            values,
-            pen=pg.mkPen(width=2),
-            symbol="o",
-            symbolSize=5,
-        )
+            self.plot_widget.plot(
+                x_values,
+                values,
+                pen=pg.mkPen(width=2),
+                symbol="o",
+                symbolSize=5,
+                name=f"ROI {roi_id}",
+            )
